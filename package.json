@@ -1,0 +1,46 @@
+{
+  "name": "force-openapi-toolkit",
+  "private": true,
+  "version": "1.0.0",
+  "description": "ForceOpenAPI Toolkit — Salesforce-native tooling to discover, generate, and publish OpenAPI (Swagger) specifications from Apex @RestResource classes.",
+  "keywords": [
+    "salesforce",
+    "openapi",
+    "swagger",
+    "apex",
+    "rest-api",
+    "documentation"
+  ],
+  "author": "Moones Ben Khalifa <ben.khelifa.moones@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alMo2nes/force-openapi-toolkit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/alMo2nes/salesforce-swagger-openapi/issues"
+  },
+  "homepage": "https://github.com/alMo2nes/salesforce-swagger-openapi#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "lint": "eslint \"**/{aura,lwc}/**/*.js\"",
+    "format": "prettier --write \"**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}\"",
+    "deploy:all": "sf project deploy start",
+    "deploy:core": "sf project deploy start --source-dir force-app",
+    "deploy:samples": "sf project deploy start --source-dir force-app-samples",
+    "test": "npm run test:unit",
+    "test:unit": "sfdx-lwc-jest",
+    "test:unit:coverage": "sfdx-lwc-jest --coverage"
+  },
+  "devDependencies": {
+    "@lwc/eslint-plugin-lwc": "^1.1.2",
+    "@prettier/plugin-xml": "^3.2.2",
+    "@salesforce/eslint-config-lwc": "^3.2.3",
+    "@salesforce/sfdx-lwc-jest": "^3.1.0",
+    "eslint": "^8.11.0",
+    "prettier": "^3.1.0",
+    "prettier-plugin-apex": "^2.0.1"
+  }
+}

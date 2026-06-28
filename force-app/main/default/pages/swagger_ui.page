@@ -1,0 +1,173 @@
+<apex:page
+        controller="SwaggerUIController"
+        showHeader="false"
+        sidebar="false"
+        docType="html-5.0">
+
+    <html>
+
+    <head>
+
+        <apex:stylesheet
+                value="{!URLFOR($Resource.swagger_ui,'swagger-ui.css')}" />
+
+        <script
+                src="{!URLFOR($Resource.swagger_ui,'swagger-ui-bundle.js')}">
+        </script>
+
+        <script
+                src="{!URLFOR($Resource.swagger_ui,'swagger-ui-standalone-preset.js')}">
+        </script>
+
+        <style>
+
+            /* Hide client secret field for PKCE */
+
+            input[type=password] {
+                display:none !important;
+            }
+
+        </style>
+
+    </head>
+
+    <body>
+
+    <apex:outputPanel layout="block">
+        <apex:outputPanel layout="block" rendered="{!isGuest}">
+            <div style="padding:10px;background:#f4f6f9;">
+                <label>OAuth Domain:</label>
+
+                <input
+                        id="domain"
+                        size="50"
+                        placeholder="https://login.salesforce.com"
+                        value="{!orgDomain}"/>
+
+                <!-- Client ID removed: user may provide their own token in the Authorize dialog -->
+
+                <button onclick="initializeSwagger()">
+                    Initialize
+                </button>
+            </div>
+        </apex:outputPanel>
+
+        <apex:outputPanel layout="block" rendered="{!!isGuest}">
+            <div style="padding:10px;background:#eef6ff;border:1px solid #d0e4ff;">
+                <strong>Note:</strong>
+                The current Salesforce user session will be used as the API Bearer token for calls from this page.
+                <div style="margin-top:6px;color:#333;font-size:0.9em;">Using domain: {!orgDomain}</div>
+            </div>
+        </apex:outputPanel>
+    </apex:outputPanel>
+
+    <div id="swagger-ui"></div>
+
+    <script>
+
+        // Inject server-side session token (empty for guest users)
+        window.sessionToken = '{!JSENCODE(sessionToken)}';
+        window.isGuest = {!isGuest};
+        window.orgDomain = '{!JSENCODE(orgDomain)}';
+
+        function buildSpec() {
+            console.log('{!specJson}')
+
+            const spec = JSON.parse('{!JSENCODE(specJson)}');
+
+            // If a domain input exists (guest users), use it; otherwise fallback to server orgDomain
+            var domainEl = document.getElementById('domain');
+            const domain = domainEl ? domainEl.value : window.orgDomain;
+
+            if (spec && spec.components && spec.components.securitySchemes && spec.components.securitySchemes.salesforce_oauth) {
+                spec.components.securitySchemes
+                    .salesforce_oauth
+                    .flows
+                    .authorizationCode
+                    .authorizationUrl =
+                    domain + '/services/oauth2/authorize';
+
+                spec.components.securitySchemes
+                    .salesforce_oauth
+                    .flows
+                    .authorizationCode
+                    .tokenUrl =
+                    domain + '/services/oauth2/token';
+            }
+
+            return spec;
+        }
+
+        function initializeSwagger() {
+
+            var specObj = buildSpec();
+
+            // For authenticated Salesforce users, remove the interactive OAuth option from the UI
+            // because we will use the current session as the Bearer token.
+            if (!window.isGuest) {
+                if (specObj.components && specObj.components.securitySchemes) {
+                    delete specObj.components.securitySchemes.salesforce_oauth;
+                }
+
+                if (specObj.security && Array.isArray(specObj.security)) {
+                    specObj.security = specObj.security.filter(function(sec) {
+                        var keys = sec ? Object.keys(sec) : [];
+                        return !(keys.length === 1 && keys[0] === 'salesforce_oauth');
+                    });
+                }
+            }
+
+            const ui = SwaggerUIBundle({
+
+                spec: specObj,
+
+                dom_id: '#swagger-ui',
+
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+
+                layout: "StandaloneLayout",
+
+                requestInterceptor: function(req) {
+
+                    // If the server provided a session token (authenticated user),
+                    // set it as the Authorization header for all requests unless
+                    // an Authorization header was already explicitly provided.
+                    if (window.sessionToken && window.sessionToken.length > 0) {
+                        req.headers = req.headers || {};
+                        if (!req.headers.Authorization) {
+                            req.headers.Authorization = 'Bearer ' + window.sessionToken;
+                        }
+                    }
+
+                    if (
+                        req.headers &&
+                        req.headers.Authorization &&
+                        !req.headers.Authorization.startsWith('Bearer ')
+                    ) {
+                        req.headers.Authorization = 'Bearer ' + req.headers.Authorization;
+                    }
+
+                    return req;
+                }
+            });
+
+            // Do not initialize OAuth clientId here; allow users to paste/enter their own token.
+
+            window.ui = ui;
+        }
+
+        // Auto-initialize for both guest and authenticated contexts. Guests will still see the domain
+        // input and can reinitialize; authenticated users get an auto-initialized UI using their session.
+        window.addEventListener('load', function() {
+            try { initializeSwagger(); } catch (e) { console.error(e); }
+        });
+
+    </script>
+
+    </body>
+    </html>
+
+</apex:page>

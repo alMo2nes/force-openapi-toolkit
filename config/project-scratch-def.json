@@ -1,0 +1,16 @@
+{
+  "orgName": "minas company",
+  "features": [
+    "API",
+    "Sites",
+    "AuthorApex"
+  ],
+  "settings": {
+    "lightningExperienceSettings": {
+      "enableS1DesktopEnabled": true
+    },
+    "mobileSettings": {
+      "enableS1EncryptedStoragePref2": false
+    }
+  }
+}

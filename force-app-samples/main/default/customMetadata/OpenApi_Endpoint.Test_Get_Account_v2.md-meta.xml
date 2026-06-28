@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Test_Get_Account V2</label>
+    <protected>false</protected>
+    <values>
+        <field>Active__c</field>
+        <value xsi:type="xsd:boolean">true</value>
+    </values>
+    <values>
+        <field>Class_Name__c</field>
+        <value xsi:type="xsd:string">AccountApi</value>
+    </values>
+    <values>
+        <field>Deprecated__c</field>
+        <value xsi:type="xsd:boolean">false</value>
+    </values>
+    <values>
+        <field>Http_Method__c</field>
+        <value xsi:type="xsd:string">GET</value>
+    </values>
+    <values>
+        <field>Method_Name__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Path__c</field>
+        <value xsi:type="xsd:string">/services/apexrest/v1/accounts/{id}</value>
+    </values>
+    <values>
+        <field>Spec__c</field>
+        <value xsi:type="xsd:string">{
+  &quot;summary&quot;: &quot;Get Account by Id&quot;,
+  &quot;description&quot;: &quot;Retrieve a Salesforce Account record&quot;,
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;Account found&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+              &quot;Id&quot;: { &quot;type&quot;: &quot;string&quot; },
+              &quot;Name&quot;: { &quot;type&quot;: &quot;string&quot; },
+              &quot;Industry&quot;: { &quot;type&quot;: &quot;string&quot; }
+            }
+          }
+        }
+      }
+    },
+    &quot;404&quot;: {
+      &quot;description&quot;: &quot;Account not found&quot;
+    }
+  }
+}</value>
+    </values>
+    <values>
+        <field>Version__c</field>
+        <value xsi:type="xsd:string">v2</value>
+    </values>
+</CustomMetadata>

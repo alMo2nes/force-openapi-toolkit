@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExtlClntAppOauthSettings xmlns="http://soap.sforce.com/2006/04/metadata">
+    <commaSeparatedOauthScopes>Api, RefreshToken</commaSeparatedOauthScopes>
+    <externalClientApplication>Swagger_Test_App</externalClientApplication>
+    <isFirstPartyAppEnabled>false</isFirstPartyAppEnabled>
+    <label>Swagger_Test_App_oauth</label>
+    <oauthLink>00DHs000000QmY8:888Hs000000jMSk</oauthLink>
+</ExtlClntAppOauthSettings>

@@ -1,0 +1,28 @@
+{
+  "packageDirectories": [
+    {
+      "versionName": "ver 0.1",
+      "versionNumber": "0.1.0.NEXT",
+      "path": "force-app",
+      "default": true,
+      "package": "sf-swagger",
+      "versionDescription": "Core OpenAPI/Swagger UI package"
+    },
+    {
+      "versionName": "Samples 1.0",
+      "versionNumber": "1.0.0.NEXT",
+      "path": "force-app-samples",
+      "default": false,
+      "package": "sf-swagger-samples",
+      "versionDescription": "Demo samples for the OpenAPI/Swagger UI package (AccountApi + OAuth config)"
+    }
+  ],
+  "name": "force-openapi-toolkit",
+  "namespace": "",
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "67.0",
+  "packageAliases": {
+    "sf-swagger": "0HoHs000000kCqIKAU",
+    "sf-swagger-samples": "0HoHs000000kCqIKAU"
+  }
+}

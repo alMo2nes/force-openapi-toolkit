@@ -1,0 +1,53 @@
+.sidebar-container {
+    height: 100%;
+    background: #fdfdfd;
+    border-right: 1px solid #ddd;
+}
+
+.list-area {
+    height: calc(100vh - 200px);
+}
+
+.item-row {
+    cursor: pointer;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.item-row:hover {
+    background-color: #f3f3f3;
+}
+
+.item-row.is-selected {
+    background-color: #eef4ff;
+    border-color: #0176d3;
+    font-weight: bold;
+}
+
+.class-name {
+    font-size: 13px;
+    color: #333;
+}
+
+.config-count {
+    color: #666;
+    font-size: 11px;
+}
+
+.version-text {
+    color: #0176d3;
+    font-weight: 500;
+}
+
+.badge-mini {
+    font-size: 9px;
+    padding: 1px 4px;
+    line-height: 1;
+}
+
+.filter-toggle {
+    --lwc-heightInputToggle: 14px;
+    --lwc-widthInputToggle: 28px;
+}

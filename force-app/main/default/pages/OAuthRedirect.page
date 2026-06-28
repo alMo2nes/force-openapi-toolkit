@@ -1,0 +1,7 @@
+<!--
+ - Created by minas on 05/04/2026.
+ -->
+
+<apex:page id="OAuthRedirect" showHeader="false" sidebar="false" docType="html-5.0">
+    <apex:includeScript value="{!URLFOR($Resource.swagger_ui, 'oauth2-redirect.js')}" />
+</apex:page>

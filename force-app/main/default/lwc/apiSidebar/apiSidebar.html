@@ -1,0 +1,64 @@
+<template>
+    <div class="sidebar-container slds-p-around_small">
+        <!-- Search and Filter Header -->
+        <div class="slds-m-bottom_small">
+            <lightning-input
+                type="search"
+                label="Search Classes"
+                placeholder="Search..."
+                onchange={handleSearchChange}
+                variant="label-hidden"
+                class="slds-m-bottom_x-small">
+            </lightning-input>
+
+            <div class="slds-grid slds-grid_vertical-align-center slds-p-horizontal_x-small">
+                <lightning-input
+                    type="toggle"
+                    label="Show Only New"
+                    message-toggle-active=""
+                    message-toggle-inactive=""
+                    onchange={handleFilterToggle}
+                    class="filter-toggle">
+                </lightning-input>
+                <span class="slds-text-body_small slds-m-left_x-small">New Only</span>
+            </div>
+        </div>
+
+        <!-- List Area -->
+        <div class="list-area slds-scrollable_y">
+            <template if:true={filteredItems}>
+                <template for:each={filteredItems} for:item="item">
+                    <div
+                        key={item.className}
+                        class={item.classNameAttr}
+                        onclick={handleItemSelect}
+                        data-name={item.className}>
+
+                        <div class="slds-grid slds-grid_vertical-align-center">
+                            <div class="slds-col slds-grow">
+                                <span class="class-name slds-truncate" title={item.className}>{item.className}</span>
+                            </div>
+                            <div class="slds-col slds-grow-none slds-p-left_x-small">
+                                <template if:false={item.hasConfig}>
+                                    <span class="slds-badge slds-theme_success badge-mini">New</span>
+                                </template>
+                                <template if:true={item.hasConfig}>
+                                    <span class="config-count">({item.configCount})</span>
+                                </template>
+                            </div>
+                        </div>
+                        <div if:true={item.latestVersion} class="slds-text-body_small slds-m-top_xxx-small version-text">
+                            v{item.latestVersion}
+                        </div>
+                    </div>
+                </template>
+            </template>
+
+            <template if:false={filteredItems}>
+                <div class="slds-text-align_center slds-p-top_large slds-text-color_weak">
+                    No classes found.
+                </div>
+            </template>
+        </div>
+    </div>
+</template>
