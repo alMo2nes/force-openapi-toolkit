@@ -25,7 +25,7 @@
       <excludeFolder url="file://$MODULE_DIR$/.sf" />
       <excludeFolder url="file://$MODULE_DIR$/.sfdx" />
     </content>
-    <orderEntry type="jdk" jdkName="IlluminatedCloud (salesforce-swagger-openapi/mbk)" jdkType="IlluminatedCloud" />
+    <orderEntry type="jdk" jdkName="IlluminatedCloud (force-openapi-toolkit/mbk)" jdkType="IlluminatedCloud" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="PROVIDED" name="salesforce-swagger-openapi/lwc_types" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="force-openapi-toolkit/lwc_types" level="project" />

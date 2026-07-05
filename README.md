@@ -32,6 +32,20 @@ npm install
 - The project includes a Swagger UI (served from a Visualforce page and optionally exposed through a Salesforce Site) so external API users can explore your published OpenAPI docs. Configure the Site's Guest User access carefully to expose only the intended API documentation and static assets.
 - The included Lightning App (Apex API Studio) provides administrators with an interface to discover `@RestResource` endpoints, generate OpenAPI specs, preview them, and publish to the Site.
 
+---
+## 🚨 CRITICAL CONFIGURATION: Enable CORS for OAuth Endpoints 🚨
+
+> **&#x26A0; IMPORTANT: ADMIN ACTION REQUIRED FOR OAUTH FUNCTIONALITY &#x26A0;**
+> To ensure proper functionality of OAuth flows within the Swagger UI, especially when interacting with your Salesforce org's APIs, **you MUST enable "CORS for OAuth endpoints"**.
+
+**Follow these steps:**
+1.  Navigate to **Setup**.
+2.  In the Quick Find box, search for and select **CORS**.
+3.  In the "Cross-Origin Resource Sharing (CORS) Policy Settings" section, click **Edit**.
+4.  **Enable** the checkbox for `Enable CORS for OAuth endpoints`.
+5.  **Save** your changes.
+---
+
 ## Screenshots
 Below are screenshots showing the public Swagger UI and the Apex API Studio admin interface.
 
@@ -42,7 +56,46 @@ Below are screenshots showing the public Swagger UI and the Apex API Studio admi
 *Lightning App used by administrators to discover endpoints and generate OpenAPI descriptions.*
 
 ## ApexDoc Annotations
-Use Javadoc-style tags above your `@RestResource` methods to control generated OpenAPI metadata:
+Use Javadoc-style tags above your `@RestResource` methods to control generated OpenAPI metadata. These comments are parsed to enrich your OpenAPI specification.
+
+**Example:**
+
+```apex
+/**
+ * @description Sample REST resource used by this package to expose Account data.
+ */
+@RestResource(UrlMapping='/v1/accounts/*')
+global with sharing class AccountApi {
+
+    /**
+     * @description Returns account details for the account id included in the URL.
+     * @param {String} accountId [path] The 15 or 18 character Salesforce ID.
+     * @response 200 {Account} Successful retrieval of account.
+     * @response 404 {String} Account not found error message.
+     */
+    @HttpGet
+    global static Account getAccount() {
+        // ... implementation ...
+    }
+
+    /**
+     * @description Updates specific Account fields.
+     * @param {String} id [path][required] The 15 or 18 character Salesforce ID of the account to update.
+     * @param {
+     *   name: string,
+     *   industry: string
+     * } accountBody The fields to update on the Account record.
+     * @response 200 {Account} The updated Account record.
+     * @response 400 {String} Error if Id is missing or invalid.
+     */
+    @HttpPatch
+    global static Account updateAccount() {
+        // ... implementation ...
+    }
+}
+```
+
+**Available Tags:**
 - `@description` — operation summary
 - `@path` — override the method path (e.g. `/accounts/{id}/details`)
 - `@param {Type} name [flags] Description` — flags: `[path]`, `[query]`, `[required]`

@@ -15,7 +15,6 @@
 }
 
 .working-editor { border-left: 4px solid #0176d3; }
-.source-editor { border-left: 4px solid #ddd; opacity: 0.9; }
 
 .shadow-card {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -45,7 +44,12 @@
     width: 150px;
 }
 
-.source-input {
-    opacity: 0.7;
-    pointer-events: none;
+/* Modal specific styles */
+.slds-modal_large {
+    width: 95%; /* Increased width */
+    max-width: 1400px; /* Increased max-width */
+}
+
+.modal-source-editor {
+    height: 600px; /* Adjust height for modal editor */
 }

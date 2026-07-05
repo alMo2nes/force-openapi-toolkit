@@ -24,15 +24,21 @@ export default class OpenApiConfigManager extends LightningElement {
     @track comparisons = null;
     @track selectedTheme = 'dracula';
     @track activeSections = [];
+    @track isSourceSpecModalOpen = false; // New property for modal visibility
+    @track modalSourceSpec = ''; // New property for modal content
+    @track modalMethodName = ''; // New property for modal title
+
     isSaving = false;
     codeMirrorLoaded = false;
     codeMirrorLoadingPromise;
     editors = new Map();
+    modalEditor; // New property for modal CodeMirror instance
     subscription = null;
     themeOptions = THEMES;
     pollTimeoutId;
     loadSequence = 0;
     editorsInitialized = false;
+    modalEditorInitialized = false; // Track modal editor initialization
 
     @wire(MessageContext) messageContext;
 
@@ -45,11 +51,13 @@ export default class OpenApiConfigManager extends LightningElement {
 
     renderedCallback() {
         this.initEditors();
+        this.initModalEditor(); // Initialize modal editor if open
     }
 
     disconnectedCallback() {
         this.clearPollTimeout();
         this.destroyEditors();
+        this.destroyModalEditor(); // Destroy modal editor
     }
 
     subscribeToMessageChannel() {
@@ -149,12 +157,10 @@ export default class OpenApiConfigManager extends LightningElement {
 
         this.comparisons.forEach(comp => {
             const workingHost = this.template.querySelector(`.working-editor[data-key="${comp.methodName}"]`);
-            const sourceHost = this.template.querySelector(`.source-editor[data-key="${comp.methodName}"]`);
 
-            if (!workingHost || !sourceHost) return;
+            if (!workingHost) return;
 
             workingHost.replaceChildren();
-            sourceHost.replaceChildren();
 
             const config = { mode: { name: "javascript", json: true }, lineNumbers: true, lineWrapping: true, matchBrackets: true, autoCloseBrackets: true, foldGutter: true, gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-lint-markers"], lint: true, smartIndent: true, indentUnit: 2, theme: this.selectedTheme };
             
@@ -162,15 +168,26 @@ export default class OpenApiConfigManager extends LightningElement {
             ed.setValue(comp.currentSpec || ''); ed.setSize(null, 500);
             ed.on('change', (cm) => this.updateComparisonField(comp.methodName, 'currentSpec', cm.getValue()));
             this.editors.set(comp.methodName + '_working', ed);
-
-            const srcEd = window.CodeMirror(sourceHost, { ...config, readOnly: true });
-            srcEd.setValue(comp.srcSpec || ''); srcEd.setSize(null, 500);
-            this.editors.set(comp.methodName + '_source', srcEd);
         });
 
-        this.editorsInitialized = this.comparisons.length === 0 || this.comparisons.every(comp => this.editors.has(comp.methodName + '_working') && this.editors.has(comp.methodName + '_source'));
+        this.editorsInitialized = this.comparisons.length === 0 || this.comparisons.every(comp => this.editors.has(comp.methodName + '_working'));
         if (this.editorsInitialized) {
             this.scheduleEditorRefresh();
+        }
+    }
+
+    initModalEditor() {
+        if (!this.isSourceSpecModalOpen || !this.codeMirrorLoaded || this.modalEditorInitialized) return;
+
+        const modalHost = this.template.querySelector('.modal-source-editor');
+        if (modalHost) {
+            modalHost.replaceChildren();
+            const config = { mode: { name: "javascript", json: true }, lineNumbers: true, lineWrapping: true, matchBrackets: true, autoCloseBrackets: true, foldGutter: true, gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-lint-markers"], lint: true, smartIndent: true, indentUnit: 2, theme: this.selectedTheme, readOnly: true };
+            this.modalEditor = window.CodeMirror(modalHost, config);
+            this.modalEditor.setValue(this.modalSourceSpec || '');
+            this.modalEditor.setSize(null, 500);
+            this.modalEditorInitialized = true;
+            this.modalEditor.refresh();
         }
     }
 
@@ -229,11 +246,47 @@ export default class OpenApiConfigManager extends LightningElement {
     handleThemeChange(event) {
         this.selectedTheme = event.detail.value;
         this.editors.forEach(editor => editor.setOption('theme', this.selectedTheme));
+        if (this.modalEditor) {
+            this.modalEditor.setOption('theme', this.selectedTheme);
+        }
         this.scheduleEditorRefresh();
     }
     handleSectionToggle() { this.scheduleEditorRefresh(); }
-    handleSyncPath(event) { const comp = this.getComparison(event.target.dataset.key); if (comp) this.updateComparisonField(comp.methodName, 'currentPath', comp.srcPath); }
-    handleSyncSpec(event) { const key = event.target.dataset.key; const comp = this.getComparison(key); const ed = this.editors.get(key + '_working'); if (comp && ed) { ed.setValue(comp.srcSpec); this.updateComparisonField(key, 'currentSpec', comp.srcSpec); } }
+    
+    handleResetPath(event) {
+        const key = event.target.dataset.key;
+        const comp = this.getComparison(key);
+        if (comp) {
+            this.updateComparisonField(key, 'currentPath', comp.srcPath);
+        }
+    }
+
+    handleResetSpec(event) {
+        const key = event.target.dataset.key;
+        const comp = this.getComparison(key);
+        const ed = this.editors.get(key + '_working');
+        if (comp && ed) {
+            ed.setValue(comp.srcSpec);
+            this.updateComparisonField(key, 'currentSpec', comp.srcSpec);
+        }
+    }
+
+    handleViewSourceSpec(event) {
+        const key = event.target.dataset.key;
+        const comp = this.getComparison(key);
+        if (comp) {
+            this.modalSourceSpec = comp.srcSpec;
+            this.modalMethodName = comp.methodName;
+            this.isSourceSpecModalOpen = true;
+            this.modalEditorInitialized = false; // Reset for re-initialization
+        }
+    }
+
+    closeSourceSpecModal() {
+        this.isSourceSpecModalOpen = false;
+        this.destroyModalEditor();
+    }
+
     handleValidate(event) { const ed = this.editors.get(event.target.dataset.key + '_working'); try { JSON.parse(ed ? ed.getValue() : ''); this.showToast('Valid', 'JSON is correct.', 'success'); } catch (e) { this.showToast('Invalid JSON', e.message, 'error'); } }
     handleInputChange(event) { this.updateComparisonField(event.target.dataset.key, event.target.dataset.field, event.target.value); }
     handleToggleActive(event) { this.updateComparisonField(event.target.dataset.key, 'currentActive', event.target.checked); }
@@ -276,6 +329,17 @@ export default class OpenApiConfigManager extends LightningElement {
         this.editors.clear();
     }
 
+    destroyModalEditor() {
+        if (this.modalEditor) {
+            const wrapper = this.modalEditor.getWrapperElement?.();
+            if (wrapper?.parentNode) {
+                wrapper.parentNode.removeChild(wrapper);
+            }
+            this.modalEditor = null;
+            this.modalEditorInitialized = false;
+        }
+    }
+
     clearPollTimeout() {
         if (this.pollTimeoutId) {
             clearTimeout(this.pollTimeoutId);
@@ -292,6 +356,9 @@ export default class OpenApiConfigManager extends LightningElement {
 
     refreshEditors() {
         this.editors.forEach(editor => editor.refresh());
+        if (this.modalEditor) {
+            this.modalEditor.refresh();
+        }
     }
 
     wait(milliseconds) {
