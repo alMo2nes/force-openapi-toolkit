@@ -132,7 +132,7 @@ public with sharing class OpenApiManagerController {
             Boolean autoSync = rec.mdtAutoSync != null ? rec.mdtAutoSync : false;
             addValue(customMetadata, 'Path__c', autoSync ? rec.srcPath : rec.currentPath);
             addValue(customMetadata, 'Http_Method__c', rec.httpMethod);
-            addValue(customMetadata, 'Spec__c', autoSync ? null : rec.currentSpec);
+            addValue(customMetadata, 'Spec__c', autoSync ? rec.srcSpec : rec.currentSpec);
             addValue(customMetadata, 'Version__c', rec.currentVersion);
             addValue(customMetadata, 'Active__c', rec.currentActive);
             addValue(customMetadata, 'Deprecated__c', rec.currentDeprecated);
@@ -140,6 +140,68 @@ public with sharing class OpenApiManagerController {
             addValue(customMetadata, 'Class_Name__c', rec.className);
             addValue(customMetadata, 'Method_Name__c', rec.methodName);
             mdContainer.addMetadata(customMetadata);
+        }
+
+        if (Test.isRunningTest()) return 'test-job-id';
+        return Metadata.Operations.enqueueDeployment(mdContainer, null);
+    }
+
+    /**
+     * Regenerates specs from source for all auto-sync endpoints and deploys them.
+     * Returns the deployment job ID for status polling.
+     */
+    @AuraEnabled
+    public static String deployAutoSyncConfigs() {
+        List<OpenApi_Endpoint__mdt> autoSyncRecords = [
+            SELECT DeveloperName, Class_Name__c, Method_Name__c, Http_Method__c,
+                   Path__c, Spec__c, Version__c, Active__c, Deprecated__c
+            FROM OpenApi_Endpoint__mdt
+            WHERE Auto_Sync_Spec__c = true AND Active__c = true
+            WITH USER_MODE
+        ];
+
+        if (autoSyncRecords.isEmpty()) {
+            throw new AuraHandledException('No active auto-sync endpoints found.');
+        }
+
+        // Index source endpoints by class name for efficient lookup
+        List<RestEndpointInspector.EndpointDescriptor> sourceClasses = RestEndpointInspector.getRestEndpoints();
+        Map<String, RestEndpointInspector.EndpointDescriptor> sourceByClass = new Map<String, RestEndpointInspector.EndpointDescriptor>();
+        for (RestEndpointInspector.EndpointDescriptor ed : sourceClasses) {
+            sourceByClass.put(ed.className, ed);
+        }
+
+        Metadata.DeployContainer mdContainer = new Metadata.DeployContainer();
+        for (OpenApi_Endpoint__mdt mdt : autoSyncRecords) {
+            RestEndpointInspector.EndpointDescriptor ed = sourceByClass.get(mdt.Class_Name__c);
+            if (ed == null) continue;
+
+            RestEndpointInspector.MethodDescriptor targetMethod;
+            for (RestEndpointInspector.MethodDescriptor m : ed.httpMethods) {
+                if (m.name == mdt.Method_Name__c) { targetMethod = m; break; }
+            }
+            if (targetMethod == null) continue;
+
+            String freshSpec = JSON.serializePretty(EndpointConfigGenerator.getOperationSpec(mdt.Class_Name__c, mdt.Method_Name__c));
+            String freshPath = standardizePath(ed.urlPath, targetMethod);
+
+            Metadata.CustomMetadata customMetadata = new Metadata.CustomMetadata();
+            customMetadata.fullName = ENDPOINT_METADATA_TYPE + '.' + mdt.DeveloperName;
+            customMetadata.label = mdt.Class_Name__c + ' ' + mdt.Method_Name__c + ' v' + mdt.Version__c;
+            addValue(customMetadata, 'Path__c', freshPath);
+            addValue(customMetadata, 'Http_Method__c', mdt.Http_Method__c);
+            addValue(customMetadata, 'Spec__c', freshSpec);
+            addValue(customMetadata, 'Version__c', mdt.Version__c);
+            addValue(customMetadata, 'Active__c', mdt.Active__c);
+            addValue(customMetadata, 'Deprecated__c', mdt.Deprecated__c);
+            addValue(customMetadata, 'Auto_Sync_Spec__c', true);
+            addValue(customMetadata, 'Class_Name__c', mdt.Class_Name__c);
+            addValue(customMetadata, 'Method_Name__c', mdt.Method_Name__c);
+            mdContainer.addMetadata(customMetadata);
+        }
+
+        if (mdContainer.getMetadata().isEmpty()) {
+            throw new AuraHandledException('No matching source classes found for the configured auto-sync endpoints.');
         }
 
         if (Test.isRunningTest()) return 'test-job-id';

@@ -24,6 +24,25 @@
             </div>
         </div>
 
+        <!-- Auto-Sync Deploy Button -->
+        <div class="slds-m-bottom_small">
+            <lightning-button
+                label="Deploy Auto-Sync"
+                icon-name="utility:sync"
+                variant="brand-outline"
+                onclick={handleDeployAutoSync}
+                disabled={isDeployingAutoSync}
+                class="deploy-autosync-btn">
+            </lightning-button>
+            <template if:true={isDeployingAutoSync}>
+                <lightning-spinner
+                    alternative-text="Deploying..."
+                    size="small"
+                    class="slds-m-left_small deploy-spinner">
+                </lightning-spinner>
+            </template>
+        </div>
+
         <!-- List Area -->
         <div class="list-area slds-scrollable_y">
             <template if:true={filteredItems}>

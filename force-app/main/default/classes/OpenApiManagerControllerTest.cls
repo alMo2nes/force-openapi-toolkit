@@ -138,6 +138,28 @@ private class OpenApiManagerControllerTest {
     }
 
     @isTest
+    static void testSaveConfigsWithAutoSyncStoresSrcSpec() {
+        OpenApiManagerController.ConfigComparison rec = new OpenApiManagerController.ConfigComparison();
+        rec.className = 'TestApi';
+        rec.methodName = 'doGet';
+        rec.httpMethod = 'GET';
+        rec.currentPath = '/services/apexrest/test';
+        rec.srcPath = '/services/apexrest/test';
+        rec.srcSpec = '{"summary":"generated"}';
+        rec.currentSpec = '{"summary":"generated"}';
+        rec.currentVersion = '1.0';
+        rec.currentActive = true;
+        rec.currentDeprecated = false;
+        rec.mdtAutoSync = true;
+
+        Test.startTest();
+        String jobId = OpenApiManagerController.saveConfigs(new List<String>{ JSON.serialize(rec) });
+        Test.stopTest();
+
+        Assert.areEqual('test-job-id', jobId, 'Auto-sync save should succeed and return a job id');
+    }
+
+    @isTest
     static void testSaveConfigsRejectsInvalidJsonSpec() {
         OpenApiManagerController.ConfigComparison rec = new OpenApiManagerController.ConfigComparison();
         rec.className = 'TestApi';

@@ -53,6 +53,12 @@
                                                     Live Spec (generated from code — read only)
                                                     <lightning-badge label="Auto Sync" class="slds-m-left_x-small"></lightning-badge>
                                                 </label>
+                                                <template if:true={comp.autoSyncOutdated}>
+                                                    <div class="slds-notify slds-notify_alert slds-theme_warning slds-m-bottom_small" role="alert">
+                                                        <lightning-icon icon-name="utility:warning" alternative-text="Warning" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                                        Unpublished change — the stored spec is out of date with the current generated spec. Deploy to publish the latest version.
+                                                    </div>
+                                                </template>
                                             </template>
                                             <template if:false={comp.mdtAutoSync}>
                                                 <label class="slds-form-element__label">Working JSON Spec</label>

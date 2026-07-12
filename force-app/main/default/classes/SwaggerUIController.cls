@@ -6,33 +6,25 @@ public with sharing class SwaggerUIController {
     public Boolean isGuest { get; private set; }
 
     public SwaggerUIController() {
-        specJson = JSON.serialize(generateSpec());
-        // Initialize orgDomain using System.DomainCreator; fallback to login.salesforce.com
-        try {
-            String host = System.DomainCreator.getOrgMyDomainHostname();
-            if (host != null && host.trim().length() > 0) {
-                orgDomain = 'https://' + host;
-            } else {
-                orgDomain = 'https://login.salesforce.com';
-            }
-        } catch (Exception e) {
-            orgDomain = 'https://login.salesforce.com';
-        }
-
-        // Determine whether current user is a guest and whether to expose session id.
-        // Use UserInfo.getUserType() instead of querying Profile, which guest users cannot access.
+        // Determine guest status first so generateSpec() can use it.
         try {
             Boolean guest = UserInfo.getUserType() == 'Guest';
             isGuest = guest;
-
-            if (!guest) {
-                sessionToken = UserInfo.getSessionId();
-            } else {
-                sessionToken = '';
-            }
+            sessionToken = guest ? '' : UserInfo.getSessionId();
         } catch (Exception e) {
             isGuest = false;
             sessionToken = '';
+        }
+
+        specJson = JSON.serialize(generateSpec());
+
+        try {
+            String host = System.DomainCreator.getOrgMyDomainHostname();
+            orgDomain = (host != null && host.trim().length() > 0)
+                ? 'https://' + host
+                : 'https://login.salesforce.com';
+        } catch (Exception e) {
+            orgDomain = 'https://login.salesforce.com';
         }
     }
 
@@ -67,7 +59,7 @@ public with sharing class SwaggerUIController {
             String specToUse = rec.Spec__c;
             String path = rec.Path__c;
 
-            if (rec.Auto_Sync_Spec__c && String.isNotBlank(rec.Method_Name__c)) {
+            if (rec.Auto_Sync_Spec__c && !isGuest && String.isNotBlank(rec.Method_Name__c)) {
                 Map<String, Object> generatedOp = EndpointConfigGenerator.getOperationSpec(rec.Class_Name__c, rec.Method_Name__c);
                 if (generatedOp != null) {
                     specToUse = JSON.serialize(generatedOp);

@@ -137,11 +137,12 @@ export default class OpenApiConfigManager extends LightningElement {
                 return;
             }
 
-            this.comparisons = data.map(c => ({ 
-                ...c, 
-                pathMatches: c.currentPath === c.srcPath, 
-                specMatches: c.currentSpec === c.srcSpec, 
-                accordionLabel: `${c.httpMethod} ${c.methodName}` 
+            this.comparisons = data.map(c => ({
+                ...c,
+                pathMatches: c.currentPath === c.srcPath,
+                specMatches: c.currentSpec === c.srcSpec,
+                autoSyncOutdated: !!c.mdtAutoSync && c.mdtSpec !== c.srcSpec,
+                accordionLabel: `${c.httpMethod} ${c.methodName}`
             }));
             
             if (this.comparisons.length > 0 && this.activeSections.length === 0) {
