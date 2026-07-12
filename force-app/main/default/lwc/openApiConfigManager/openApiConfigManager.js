@@ -162,11 +162,14 @@ export default class OpenApiConfigManager extends LightningElement {
 
             workingHost.replaceChildren();
 
-            const config = { mode: { name: "javascript", json: true }, lineNumbers: true, lineWrapping: true, matchBrackets: true, autoCloseBrackets: true, foldGutter: true, gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-lint-markers"], lint: true, smartIndent: true, indentUnit: 2, theme: this.selectedTheme };
-            
+            const readOnly = !!comp.mdtAutoSync;
+            const config = { mode: { name: "javascript", json: true }, lineNumbers: true, lineWrapping: true, matchBrackets: true, autoCloseBrackets: true, foldGutter: true, gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-lint-markers"], lint: !readOnly, smartIndent: true, indentUnit: 2, theme: this.selectedTheme, readOnly };
+
             const ed = window.CodeMirror(workingHost, config);
             ed.setValue(comp.currentSpec || ''); ed.setSize(null, 500);
-            ed.on('change', (cm) => this.updateComparisonField(comp.methodName, 'currentSpec', cm.getValue()));
+            if (!readOnly) {
+                ed.on('change', (cm) => this.updateComparisonField(comp.methodName, 'currentSpec', cm.getValue()));
+            }
             this.editors.set(comp.methodName + '_working', ed);
         });
 
@@ -291,6 +294,28 @@ export default class OpenApiConfigManager extends LightningElement {
     handleInputChange(event) { this.updateComparisonField(event.target.dataset.key, event.target.dataset.field, event.target.value); }
     handleToggleActive(event) { this.updateComparisonField(event.target.dataset.key, 'currentActive', event.target.checked); }
     handleToggleDeprecated(event) { this.updateComparisonField(event.target.dataset.key, 'currentDeprecated', event.target.checked); }
+    handleToggleAutoSync(event) {
+        const key = event.target.dataset.key;
+        const enabled = event.target.checked;
+        const comp = this.getComparison(key);
+        if (!comp) return;
+
+        this.comparisons = this.comparisons.map(c => {
+            if (c.methodName !== key) return c;
+            const updated = { ...c, mdtAutoSync: enabled };
+            if (enabled) {
+                updated.currentPath = c.srcPath;
+                updated.currentSpec = c.srcSpec;
+            }
+            updated.pathMatches = updated.currentPath === updated.srcPath;
+            updated.specMatches = updated.currentSpec === updated.srcSpec;
+            return updated;
+        });
+
+        // Destroy editors now; renderedCallback will re-init them after LWC repaints
+        this.editorsInitialized = false;
+        this.destroyEditors();
+    }
 
     updateComparisonField(key, field, value) {
         this.comparisons = this.comparisons.map(comp => {
@@ -310,6 +335,7 @@ export default class OpenApiConfigManager extends LightningElement {
 
     getFirstJsonValidationError() {
         for (const comp of this.comparisons) {
+            if (comp.mdtAutoSync) continue;
             try {
                 JSON.parse(comp.currentSpec || '');
             } catch (e) {

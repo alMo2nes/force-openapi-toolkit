@@ -32,6 +32,20 @@ public with sharing class EndpointConfigGenerator {
         return null;
     }
 
+    public static String getGeneratedPath(String className, String methodName) {
+        List<RestEndpointInspector.EndpointDescriptor> endpoints = RestEndpointInspector.getRestEndpoints();
+        for (RestEndpointInspector.EndpointDescriptor ed : endpoints) {
+            if (ed.className == className) {
+                for (RestEndpointInspector.MethodDescriptor method : ed.httpMethods) {
+                    if (method.name == methodName) {
+                        return calculateFinalPath(ed.urlPath, method);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     @AuraEnabled
     public static String generateOpenApiSpec() {
         Map<String, Object> spec = new Map<String, Object>{

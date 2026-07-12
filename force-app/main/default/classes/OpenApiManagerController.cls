@@ -55,7 +55,7 @@ public with sharing class OpenApiManagerController {
 
         Map<String, OpenApi_Endpoint__mdt> mdtMap = new Map<String, OpenApi_Endpoint__mdt>();
         for (OpenApi_Endpoint__mdt mdt : [
-            SELECT DeveloperName, Path__c, Http_Method__c, Spec__c, Version__c, Active__c, Deprecated__c, Method_Name__c
+            SELECT DeveloperName, Path__c, Http_Method__c, Spec__c, Version__c, Active__c, Deprecated__c, Method_Name__c, Auto_Sync_Spec__c
             FROM OpenApi_Endpoint__mdt WHERE Class_Name__c = :className WITH USER_MODE
         ]) { mdtMap.put(mdt.Http_Method__c.toUpperCase() + '|' + mdt.Method_Name__c, mdt); }
 
@@ -78,8 +78,16 @@ public with sharing class OpenApiManagerController {
                 comp.mdtVersion = mdt.Version__c;
                 comp.mdtActive = mdt.Active__c;
                 comp.mdtDeprecated = mdt.Deprecated__c;
-                comp.currentPath = comp.mdtPath;
-                comp.currentSpec = comp.mdtSpec;
+                comp.mdtAutoSync = mdt.Auto_Sync_Spec__c;
+                
+                // If auto-sync is enabled, use generated spec and path from source
+                if (mdt.Auto_Sync_Spec__c) {
+                    comp.currentPath = comp.srcPath;
+                    comp.currentSpec = comp.srcSpec;
+                } else {
+                    comp.currentPath = comp.mdtPath;
+                    comp.currentSpec = comp.mdtSpec;
+                }
                 comp.currentVersion = comp.mdtVersion;
                 comp.currentActive = comp.mdtActive;
                 comp.currentDeprecated = comp.mdtDeprecated;
@@ -87,6 +95,7 @@ public with sharing class OpenApiManagerController {
                 comp.isSpecOutdated = (comp.mdtSpec != comp.srcSpec);
             } else {
                 comp.isNew = true;
+                comp.mdtAutoSync = false;
                 comp.currentPath = comp.srcPath;
                 comp.currentSpec = comp.srcSpec;
                 comp.currentVersion = '1.0';
@@ -120,12 +129,14 @@ public with sharing class OpenApiManagerController {
             String recordName = rec.className + '_' + rec.methodName + '_' + normalizeVersionForDeveloperName(rec.currentVersion);
             customMetadata.fullName = ENDPOINT_METADATA_TYPE + '.' + recordName;
             customMetadata.label = rec.className + ' ' + rec.methodName + ' v' + rec.currentVersion;
-            addValue(customMetadata, 'Path__c', rec.currentPath);
+            Boolean autoSync = rec.mdtAutoSync != null ? rec.mdtAutoSync : false;
+            addValue(customMetadata, 'Path__c', autoSync ? rec.srcPath : rec.currentPath);
             addValue(customMetadata, 'Http_Method__c', rec.httpMethod);
-            addValue(customMetadata, 'Spec__c', rec.currentSpec);
+            addValue(customMetadata, 'Spec__c', autoSync ? null : rec.currentSpec);
             addValue(customMetadata, 'Version__c', rec.currentVersion);
             addValue(customMetadata, 'Active__c', rec.currentActive);
             addValue(customMetadata, 'Deprecated__c', rec.currentDeprecated);
+            addValue(customMetadata, 'Auto_Sync_Spec__c', autoSync);
             addValue(customMetadata, 'Class_Name__c', rec.className);
             addValue(customMetadata, 'Method_Name__c', rec.methodName);
             mdContainer.addMetadata(customMetadata);
@@ -182,6 +193,7 @@ public with sharing class OpenApiManagerController {
         @AuraEnabled public String mdtVersion;
         @AuraEnabled public Boolean mdtActive;
         @AuraEnabled public Boolean mdtDeprecated;
+        @AuraEnabled public Boolean mdtAutoSync;
         @AuraEnabled public String srcPath;
         @AuraEnabled public String srcSpec;
         @AuraEnabled public String currentPath;
@@ -212,14 +224,16 @@ public with sharing class OpenApiManagerController {
         if (String.isBlank(rec.currentVersion)) {
             throw new AuraHandledException('Endpoint version is required.');
         }
-        if (String.isBlank(rec.currentSpec)) {
-            throw new AuraHandledException('Endpoint OpenAPI spec cannot be blank.');
-        }
-
-        try {
-            JSON.deserializeUntyped(rec.currentSpec);
-        } catch (JSONException e) {
-            throw new AuraHandledException('Endpoint OpenAPI spec must be valid JSON.');
+        Boolean autoSync = rec.mdtAutoSync != null ? rec.mdtAutoSync : false;
+        if (!autoSync) {
+            if (String.isBlank(rec.currentSpec)) {
+                throw new AuraHandledException('Endpoint OpenAPI spec cannot be blank.');
+            }
+            try {
+                JSON.deserializeUntyped(rec.currentSpec);
+            } catch (JSONException e) {
+                throw new AuraHandledException('Endpoint OpenAPI spec must be valid JSON.');
+            }
         }
     }
 

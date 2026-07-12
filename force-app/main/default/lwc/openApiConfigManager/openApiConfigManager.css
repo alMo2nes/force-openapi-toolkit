@@ -44,6 +44,13 @@
     width: 150px;
 }
 
+.section-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+}
+
 /* Modal specific styles */
 .slds-modal_large {
     width: 95%; /* Increased width */

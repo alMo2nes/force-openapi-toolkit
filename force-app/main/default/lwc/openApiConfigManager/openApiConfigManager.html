@@ -25,7 +25,9 @@
                     <lightning-accordion allow-multiple-sections-open active-section-name={activeSections} onsectiontoggle={handleSectionToggle}>
                         <template for:each={comparisons} for:item="comp">
                             <lightning-accordion-section key={comp.methodName} name={comp.methodName} label={comp.accordionLabel}>
-                                <div slot="actions">
+                                <div slot="actions" class="section-actions">
+                                    <lightning-input type="toggle" label="Auto Sync" checked={comp.mdtAutoSync} data-key={comp.methodName} onchange={handleToggleAutoSync} variant="label-hidden" message-toggle-active="Auto Sync" message-toggle-inactive="Auto Sync"></lightning-input>
+                                    <lightning-input type="toggle" label="Deprecated" checked={comp.currentDeprecated} data-key={comp.methodName} onchange={handleToggleDeprecated} variant="label-hidden" message-toggle-active="Deprecated" message-toggle-inactive="Deprecated"></lightning-input>
                                     <lightning-input type="toggle" label="Active" checked={comp.currentActive} onchange={handleToggleActive} data-key={comp.methodName} variant="label-hidden" message-toggle-active="Active" message-toggle-inactive="Inactive"></lightning-input>
                                 </div>
 
@@ -34,33 +36,40 @@
                                     <!-- Path Editing Row -->
                                     <div class="slds-grid slds-grid_vertical-align-end slds-m-bottom_large">
                                         <div class="slds-col slds-size_1-of-1">
-                                            <lightning-input label="Configured Path (Metadata)" value={comp.currentPath} data-key={comp.methodName} data-field="currentPath" onchange={handleInputChange}></lightning-input>
-                                            <div class="slds-m-top_xx-small slds-text-align_right">
-                                                <lightning-button label="Reset Path to Generated" variant="neutral" size="small" onclick={handleResetPath} data-key={comp.methodName} disabled={comp.pathMatches}></lightning-button>
-                                            </div>
+                                            <lightning-input label="Path" value={comp.currentPath} data-key={comp.methodName} data-field="currentPath" onchange={handleInputChange} read-only={comp.mdtAutoSync}></lightning-input>
+                                            <template if:false={comp.mdtAutoSync}>
+                                                <div class="slds-m-top_xx-small slds-text-align_right">
+                                                    <lightning-button label="Reset Path to Generated" variant="neutral" size="small" onclick={handleResetPath} data-key={comp.methodName} disabled={comp.pathMatches}></lightning-button>
+                                                </div>
+                                            </template>
                                         </div>
                                     </div>
 
                                     <!-- Spec Editor Area -->
                                     <div class="slds-grid slds-grid_vertical slds-m-bottom_large">
                                         <div class="slds-col slds-size_1-of-1">
-                                            <label class="slds-form-element__label">Working JSON Spec</label>
+                                            <template if:true={comp.mdtAutoSync}>
+                                                <label class="slds-form-element__label">
+                                                    Live Spec (generated from code — read only)
+                                                    <lightning-badge label="Auto Sync" class="slds-m-left_x-small"></lightning-badge>
+                                                </label>
+                                            </template>
+                                            <template if:false={comp.mdtAutoSync}>
+                                                <label class="slds-form-element__label">Working JSON Spec</label>
+                                            </template>
                                             <div class="editor-container working-editor" data-key={comp.methodName} lwc:dom="manual"></div>
-                                            <div class="slds-m-top_xx-small slds-text-align_right">
-                                                <lightning-button label="Lint JSON" variant="neutral" size="small" icon-name="utility:check" onclick={handleValidate} data-key={comp.methodName} class="slds-m-right_x-small"></lightning-button>
-                                                <lightning-button label="Reset Spec to Generated" variant="neutral" size="small" onclick={handleResetSpec} data-key={comp.methodName} disabled={comp.specMatches} class="slds-m-right_x-small"></lightning-button>
-                                                <lightning-button label="View Generated Spec" variant="neutral" size="small" onclick={handleViewSourceSpec} data-key={comp.methodName}></lightning-button>
-                                            </div>
+                                            <template if:false={comp.mdtAutoSync}>
+                                                <div class="slds-m-top_xx-small slds-text-align_right">
+                                                    <lightning-button label="Lint JSON" variant="neutral" size="small" icon-name="utility:check" onclick={handleValidate} data-key={comp.methodName} class="slds-m-right_x-small"></lightning-button>
+                                                    <lightning-button label="Reset Spec to Generated" variant="neutral" size="small" onclick={handleResetSpec} data-key={comp.methodName} disabled={comp.specMatches} class="slds-m-right_x-small"></lightning-button>
+                                                    <lightning-button label="View Generated Spec" variant="neutral" size="small" onclick={handleViewSourceSpec} data-key={comp.methodName}></lightning-button>
+                                                </div>
+                                            </template>
                                         </div>
                                     </div>
 
-                                    <div class="slds-grid slds-gutters slds-m-top_medium slds-p-top_small slds-border_top">
-                                        <div class="slds-col slds-size_1-of-4">
-                                            <lightning-input label="Version" value={comp.currentVersion} data-key={comp.methodName} data-field="currentVersion" onchange={handleInputChange}></lightning-input>
-                                        </div>
-                                        <div class="slds-col slds-size_1-of-4 slds-p-top_large">
-                                            <lightning-input type="checkbox" label="Mark as Deprecated" checked={comp.currentDeprecated} data-key={comp.methodName} onchange={handleToggleDeprecated}></lightning-input>
-                                        </div>
+                                    <div class="slds-m-top_medium slds-p-top_small slds-border_top">
+                                        <lightning-input label="Version" value={comp.currentVersion} data-key={comp.methodName} data-field="currentVersion" onchange={handleInputChange} class="slds-size_1-of-4"></lightning-input>
                                     </div>
                                 </div>
                             </lightning-accordion-section>

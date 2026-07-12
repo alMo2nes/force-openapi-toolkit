@@ -45,190 +45,54 @@ public with sharing class SwaggerUIController {
                 SELECT
                         Path__c,
                         Http_Method__c,
-                        Version__c,
                         Spec__c,
-                        Deprecated__c,
                         Active__c,
-                        Class_Name__c
+                        Deprecated__c,
+                        Class_Name__c,
+                        Method_Name__c,
+                        Auto_Sync_Spec__c
                 FROM OpenApi_Endpoint__mdt
                 WHERE Active__c = TRUE
-                ORDER BY Class_Name__c, Path__c, Http_Method__c, Version__c
+                ORDER BY Class_Name__c, Path__c, Http_Method__c
         ];
-
-        Map<String, List<OpenApi_Endpoint__mdt>> grouped =
-                new Map<String, List<OpenApi_Endpoint__mdt>>();
 
         Set<String> classNames = new Set<String>();
 
         for (OpenApi_Endpoint__mdt rec : records) {
 
-            String key =
-                    rec.Class_Name__c + '|' +
-                            rec.Path__c + '|' +
-                            rec.Http_Method__c.toLowerCase();
-
-            if (!grouped.containsKey(key)) {
-                grouped.put(key, new List<OpenApi_Endpoint__mdt>());
-            }
-
-            grouped.get(key).add(rec);
-
             if (String.isNotBlank(rec.Class_Name__c)) {
                 classNames.add(rec.Class_Name__c);
             }
-        }
 
-        for (String key : grouped.keySet()) {
+            String specToUse = rec.Spec__c;
+            String path = rec.Path__c;
 
-            List<String> parts = key.split('\\|');
-
-            String className = parts[0];
-            String path = parts[1];
-            String method = parts[2];
-
-            List<OpenApi_Endpoint__mdt> versions =
-                    grouped.get(key);
-
-            OpenApi_Endpoint__mdt latest =
-                    versions[versions.size() - 1];
+            if (rec.Auto_Sync_Spec__c && String.isNotBlank(rec.Method_Name__c)) {
+                Map<String, Object> generatedOp = EndpointConfigGenerator.getOperationSpec(rec.Class_Name__c, rec.Method_Name__c);
+                if (generatedOp != null) {
+                    specToUse = JSON.serialize(generatedOp);
+                }
+                String generatedPath = EndpointConfigGenerator.getGeneratedPath(rec.Class_Name__c, rec.Method_Name__c);
+                if (String.isNotBlank(generatedPath)) {
+                    path = generatedPath;
+                }
+            }
 
             Map<String, Object> operation =
-                    (Map<String, Object>)JSON.deserializeUntyped(
-                            latest.Spec__c
-                    );
+                    (Map<String, Object>)JSON.deserializeUntyped(specToUse);
 
-            // Tag each operation with its Apex class name so Swagger UI groups by class
-            operation.put('tags', new List<String>{ className });
-
-            //
-            // Version selector
-            //
-            List<Object> parameters =
-                    operation.containsKey('parameters')
-                            ? (List<Object>)operation.get('parameters')
-                            : new List<Object>();
-
-            List<String> enumValues = new List<String>();
-
-            for (OpenApi_Endpoint__mdt v : versions) {
-
-                String label = v.Version__c;
-
-                if (v.Deprecated__c) {
-                    label += ' (deprecated)';
-                }
-
-                enumValues.add(label);
+            operation.put('tags', new List<String>{ rec.Class_Name__c });
+            if (rec.Deprecated__c) {
+                operation.put('deprecated', true);
             }
 
-            parameters.add(
-                    new Map<String, Object>{
-                            'name' => 'version',
-                            'in' => 'header',
-                            'required' => true,
-                            'description' => 'API Version',
-                            'schema' => new Map<String, Object>{
-                                    'type' => 'string',
-                                    'enum' => enumValues
-                            }
-                    }
-            );
-
-            operation.put('parameters', parameters);
-
-            //
-            // Merge schemas
-            //
-            List<Object> oneOfSchemas =
-                    new List<Object>();
-
-            for (OpenApi_Endpoint__mdt v : versions) {
-
-                try {
-
-                    Map<String, Object> versionOp =
-                            (Map<String, Object>)JSON.deserializeUntyped(
-                                    v.Spec__c
-                            );
-
-                    Map<String, Object> responses =
-                            (Map<String, Object>)versionOp.get('responses');
-
-                    if (responses == null ||
-                            !responses.containsKey('200')) {
-                        continue;
-                    }
-
-                    Map<String, Object> response200 =
-                            (Map<String, Object>)responses.get('200');
-
-                    Map<String, Object> content =
-                            (Map<String, Object>)response200.get('content');
-
-                    if (content == null ||
-                            !content.containsKey('application/json')) {
-                        continue;
-                    }
-
-                    Map<String, Object> jsonContent =
-                            (Map<String, Object>)content.get(
-                                    'application/json'
-                            );
-
-                    Map<String, Object> schema =
-                            (Map<String, Object>)jsonContent.get('schema');
-
-                    if (schema == null) {
-                        continue;
-                    }
-
-                    oneOfSchemas.add(
-                            new Map<String, Object>{
-                                    'title' => v.Version__c,
-                                    'description' =>
-                                            v.Deprecated__c
-                                                    ? 'Deprecated'
-                                                    : 'Current',
-                                    'allOf' => new List<Object>{ schema }
-                            }
-                    );
-
-                } catch (Exception e) {
-                    System.debug(e);
-                }
-            }
-
-            if (!oneOfSchemas.isEmpty()) {
-
-                operation.put(
-                        'responses',
-                        new Map<String, Object>{
-                                '200' => new Map<String, Object>{
-                                        'description' =>
-                                                'Version-specific response',
-                                        'content' =>
-                                                new Map<String, Object>{
-                                                        'application/json' =>
-                                                                new Map<String, Object>{
-                                                                        'schema' =>
-                                                                                new Map<String, Object>{
-                                                                                        'oneOf' =>
-                                                                                                oneOfSchemas
-                                                                                }
-                                                                }
-                                                }
-                                }
-                        }
-                );
-            }
+            String method = rec.Http_Method__c.toLowerCase();
 
             if (!paths.containsKey(path)) {
-                paths.put(path,
-                        new Map<String, Object>());
+                paths.put(path, new Map<String, Object>());
             }
 
-            ((Map<String, Object>)paths.get(path))
-                    .put(method, operation);
+            ((Map<String, Object>)paths.get(path)).put(method, operation);
         }
 
         spec.put('openapi', '3.0.3');
@@ -303,4 +167,5 @@ public with sharing class SwaggerUIController {
 
         return spec;
     }
+
 }

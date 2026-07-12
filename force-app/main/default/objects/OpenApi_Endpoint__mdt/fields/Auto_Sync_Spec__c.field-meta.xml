@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Auto_Sync_Spec__c</fullName>
+    <defaultValue>false</defaultValue>
+    <fieldManageability>SubscriberControlled</fieldManageability>
+    <label>Auto Sync Spec from Code</label>
+    <description>When enabled, the Spec and Path fields are ignored and the actual spec is always auto-generated from the Apex class code. Disable manual editing of spec/path for this endpoint.</description>
+    <type>Checkbox</type>
+</CustomField>
