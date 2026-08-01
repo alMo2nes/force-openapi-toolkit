@@ -15,6 +15,14 @@
       "default": false,
       "package": "sf-swagger-samples",
       "versionDescription": "Demo samples for the OpenAPI/Swagger UI package (AccountApi + OAuth config)"
+    },
+    {
+      "versionName": "ver 0.1",
+      "versionNumber": "0.1.0.NEXT",
+      "path": "force-app",
+      "default": false,
+      "package": "force-openapi-toolkit",
+      "versionDescription": ""
     }
   ],
   "name": "force-openapi-toolkit",
@@ -23,6 +31,7 @@
   "sourceApiVersion": "67.0",
   "packageAliases": {
     "sf-swagger": "0HoHs000000kCqIKAU",
-    "sf-swagger-samples": "0HoHs000000kCqIKAU"
+    "sf-swagger-samples": "0HoHs000000kCqIKAU",
+    "force-openapi-toolkit": "0Hog50000000t9NCAQ"
   }
 }
