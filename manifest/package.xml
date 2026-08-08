@@ -16,6 +16,10 @@
         <members>ContactApi</members>
         <members>CaseApi</members>
         <members>ComplexApi</members>
+        <members>PostInstallHandler</members>
+        <members>PostInstallHandlerTest</members>
+        <members>ToolingApiEmptyMock</members>
+        <members>ToolingApiMock</members>
         <name>ApexClass</name>
     </types>
     <types>
@@ -82,8 +86,6 @@
         <name>CustomMetadata</name>
     </types>
     <types>
-        <members>swagger_ui Profile</members>
-        <members>Admin</members>
         <name>Profile</name>
     </types>
     <types>
@@ -98,6 +100,11 @@
     <types>
         <members>swagger_logo</members>
         <name>ContentAsset</name>
+    </types>
+    <types>
+        <members>Force_OpenApi_Toolkit_Admin</members>
+        <members>Force_OpenApi_Toolkit_Guest</members>
+        <name>PermissionSet</name>
     </types>
     <version>66.0</version>
 </Package>

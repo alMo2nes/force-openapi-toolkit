@@ -1,130 +1,294 @@
 <template>
-    <div class="slds-grid slds-grid_vertical slds-size_1-of-1 full-height">
-        <lightning-card title={cardTitle} icon-name="custom:custom108" class="slds-size_1-of-1">
+  <div class="slds-grid slds-grid_vertical slds-size_1-of-1 full-height">
+    <lightning-card
+      title={cardTitle}
+      icon-name="custom:custom108"
+      class="slds-size_1-of-1"
+    >
+      <div slot="actions" class="slds-grid slds-grid_vertical-align-center">
+        <lightning-combobox
+          name="themeSelector"
+          label="Editor Theme"
+          value={selectedTheme}
+          options={themeOptions}
+          onchange={handleThemeChange}
+          variant="label-hidden"
+          class="slds-m-right_small theme-selector"
+        >
+        </lightning-combobox>
 
-            <div slot="actions" class="slds-grid slds-grid_vertical-align-center">
-                <lightning-combobox
-                    name="themeSelector"
-                    label="Editor Theme"
-                    value={selectedTheme}
-                    options={themeOptions}
-                    onchange={handleThemeChange}
+        <template if:true={selectedClass}>
+          <lightning-button
+            label="Reload All"
+            icon-name="utility:sync"
+            onclick={handleReload}
+            variant="brand-outline"
+          ></lightning-button>
+        </template>
+      </div>
+
+      <!-- Main Content (Accordion Style) -->
+      <template if:true={comparisons}>
+        <div class="slds-p-around_medium main-content-area slds-size_1-of-1">
+          <lightning-accordion
+            allow-multiple-sections-open
+            active-section-name={activeSections}
+            onsectiontoggle={handleSectionToggle}
+          >
+            <template for:each={comparisons} for:item="comp">
+              <lightning-accordion-section
+                key={comp.methodName}
+                name={comp.methodName}
+                label={comp.accordionLabel}
+              >
+                <div slot="actions" class="section-actions">
+                  <lightning-input
+                    type="toggle"
+                    label="Auto Sync"
+                    checked={comp.mdtAutoSync}
+                    data-key={comp.methodName}
+                    onchange={handleToggleAutoSync}
                     variant="label-hidden"
-                    class="slds-m-right_small theme-selector">
-                </lightning-combobox>
+                    message-toggle-active="Auto Sync"
+                    message-toggle-inactive="Auto Sync"
+                  ></lightning-input>
+                  <lightning-input
+                    type="toggle"
+                    label="Deprecated"
+                    checked={comp.currentDeprecated}
+                    data-key={comp.methodName}
+                    onchange={handleToggleDeprecated}
+                    variant="label-hidden"
+                    message-toggle-active="Deprecated"
+                    message-toggle-inactive="Deprecated"
+                  ></lightning-input>
+                  <lightning-input
+                    type="toggle"
+                    label="Active"
+                    checked={comp.currentActive}
+                    onchange={handleToggleActive}
+                    data-key={comp.methodName}
+                    variant="label-hidden"
+                    message-toggle-active="Active"
+                    message-toggle-inactive="Inactive"
+                  ></lightning-input>
+                </div>
 
-                <template if:true={selectedClass}>
-                    <lightning-button label="Reload All" icon-name="utility:sync" onclick={handleReload} variant="brand-outline"></lightning-button>
-                </template>
-            </div>
-
-            <!-- Main Content (Accordion Style) -->
-            <template if:true={comparisons}>
-                <div class="slds-p-around_medium main-content-area slds-size_1-of-1">
-
-                    <lightning-accordion allow-multiple-sections-open active-section-name={activeSections} onsectiontoggle={handleSectionToggle}>
-                        <template for:each={comparisons} for:item="comp">
-                            <lightning-accordion-section key={comp.methodName} name={comp.methodName} label={comp.accordionLabel}>
-                                <div slot="actions" class="section-actions">
-                                    <lightning-input type="toggle" label="Auto Sync" checked={comp.mdtAutoSync} data-key={comp.methodName} onchange={handleToggleAutoSync} variant="label-hidden" message-toggle-active="Auto Sync" message-toggle-inactive="Auto Sync"></lightning-input>
-                                    <lightning-input type="toggle" label="Deprecated" checked={comp.currentDeprecated} data-key={comp.methodName} onchange={handleToggleDeprecated} variant="label-hidden" message-toggle-active="Deprecated" message-toggle-inactive="Deprecated"></lightning-input>
-                                    <lightning-input type="toggle" label="Active" checked={comp.currentActive} onchange={handleToggleActive} data-key={comp.methodName} variant="label-hidden" message-toggle-active="Active" message-toggle-inactive="Inactive"></lightning-input>
-                                </div>
-
-                                <div class="slds-box slds-theme_default shadow-card slds-p-around_medium">
-
-                                    <!-- Path Editing Row -->
-                                    <div class="slds-grid slds-grid_vertical-align-end slds-m-bottom_large">
-                                        <div class="slds-col slds-size_1-of-1">
-                                            <lightning-input label="Path" value={comp.currentPath} data-key={comp.methodName} data-field="currentPath" onchange={handleInputChange} read-only={comp.mdtAutoSync}></lightning-input>
-                                            <template if:false={comp.mdtAutoSync}>
-                                                <div class="slds-m-top_xx-small slds-text-align_right">
-                                                    <lightning-button label="Reset Path to Generated" variant="neutral" size="small" onclick={handleResetPath} data-key={comp.methodName} disabled={comp.pathMatches}></lightning-button>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </div>
-
-                                    <!-- Spec Editor Area -->
-                                    <div class="slds-grid slds-grid_vertical slds-m-bottom_large">
-                                        <div class="slds-col slds-size_1-of-1">
-                                            <template if:true={comp.mdtAutoSync}>
-                                                <label class="slds-form-element__label">
-                                                    Live Spec (generated from code — read only)
-                                                    <lightning-badge label="Auto Sync" class="slds-m-left_x-small"></lightning-badge>
-                                                </label>
-                                                <template if:true={comp.autoSyncOutdated}>
-                                                    <div class="slds-notify slds-notify_alert slds-theme_warning slds-m-bottom_small" role="alert">
-                                                        <lightning-icon icon-name="utility:warning" alternative-text="Warning" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                                                        Unpublished change — the stored spec is out of date with the current generated spec. Deploy to publish the latest version.
-                                                    </div>
-                                                </template>
-                                            </template>
-                                            <template if:false={comp.mdtAutoSync}>
-                                                <label class="slds-form-element__label">Working JSON Spec</label>
-                                            </template>
-                                            <div class="editor-container working-editor" data-key={comp.methodName} lwc:dom="manual"></div>
-                                            <template if:false={comp.mdtAutoSync}>
-                                                <div class="slds-m-top_xx-small slds-text-align_right">
-                                                    <lightning-button label="Lint JSON" variant="neutral" size="small" icon-name="utility:check" onclick={handleValidate} data-key={comp.methodName} class="slds-m-right_x-small"></lightning-button>
-                                                    <lightning-button label="Reset Spec to Generated" variant="neutral" size="small" onclick={handleResetSpec} data-key={comp.methodName} disabled={comp.specMatches} class="slds-m-right_x-small"></lightning-button>
-                                                    <lightning-button label="View Generated Spec" variant="neutral" size="small" onclick={handleViewSourceSpec} data-key={comp.methodName}></lightning-button>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </div>
-
-                                    <div class="slds-m-top_medium slds-p-top_small slds-border_top">
-                                        <lightning-input label="Version" value={comp.currentVersion} data-key={comp.methodName} data-field="currentVersion" onchange={handleInputChange} class="slds-size_1-of-4"></lightning-input>
-                                    </div>
-                                </div>
-                            </lightning-accordion-section>
-                        </template>
-                    </lightning-accordion>
-
-                    <div class="slds-m-top_large slds-text-align_right sticky-footer slds-is-relative">
-                        <lightning-button label="Deploy All Metadata Updates" variant="brand" onclick={handleSave} disabled={isSaving}></lightning-button>
-                        <template if:true={isSaving}>
-                            <lightning-spinner alternative-text="Deploying..." size="small" variant="brand"></lightning-spinner>
-                        </template>
+                <div
+                  class="slds-box slds-theme_default shadow-card slds-p-around_medium"
+                >
+                  <!-- Path Editing Row -->
+                  <div
+                    class="slds-grid slds-grid_vertical-align-end slds-m-bottom_large"
+                  >
+                    <div class="slds-col slds-size_1-of-1">
+                      <lightning-input
+                        label="Path"
+                        value={comp.currentPath}
+                        data-key={comp.methodName}
+                        data-field="currentPath"
+                        onchange={handleInputChange}
+                        read-only={comp.mdtAutoSync}
+                      ></lightning-input>
+                      <template if:false={comp.mdtAutoSync}>
+                        <div class="slds-m-top_xx-small slds-text-align_right">
+                          <lightning-button
+                            label="Reset Path to Generated"
+                            variant="neutral"
+                            size="small"
+                            onclick={handleResetPath}
+                            data-key={comp.methodName}
+                            disabled={comp.pathMatches}
+                          ></lightning-button>
+                        </div>
+                      </template>
                     </div>
+                  </div>
+
+                  <!-- Spec Editor Area -->
+                  <div class="slds-grid slds-grid_vertical slds-m-bottom_large">
+                    <div class="slds-col slds-size_1-of-1">
+                      <template if:true={comp.mdtAutoSync}>
+                        <label class="slds-form-element__label">
+                          Live Spec (generated from code — read only)
+                          <lightning-badge
+                            label="Auto Sync"
+                            class="slds-m-left_x-small"
+                          ></lightning-badge>
+                        </label>
+                        <template if:true={comp.autoSyncOutdated}>
+                          <div
+                            class="slds-notify slds-notify_alert slds-theme_warning slds-m-bottom_small"
+                            role="alert"
+                          >
+                            <lightning-icon
+                              icon-name="utility:warning"
+                              alternative-text="Warning"
+                              size="x-small"
+                              class="slds-m-right_x-small"
+                            ></lightning-icon>
+                            Unpublished change — the stored spec is out of date
+                            with the current generated spec. Deploy to publish
+                            the latest version.
+                          </div>
+                        </template>
+                      </template>
+                      <template if:false={comp.mdtAutoSync}>
+                        <label class="slds-form-element__label"
+                          >Working JSON Spec</label
+                        >
+                      </template>
+                      <div
+                        class="editor-container working-editor"
+                        data-key={comp.methodName}
+                        lwc:dom="manual"
+                      ></div>
+                      <template if:false={comp.mdtAutoSync}>
+                        <div class="slds-m-top_xx-small slds-text-align_right">
+                          <lightning-button
+                            label="Lint JSON"
+                            variant="neutral"
+                            size="small"
+                            icon-name="utility:check"
+                            onclick={handleValidate}
+                            data-key={comp.methodName}
+                            class="slds-m-right_x-small"
+                          ></lightning-button>
+                          <lightning-button
+                            label="Reset Spec to Generated"
+                            variant="neutral"
+                            size="small"
+                            onclick={handleResetSpec}
+                            data-key={comp.methodName}
+                            disabled={comp.specMatches}
+                            class="slds-m-right_x-small"
+                          ></lightning-button>
+                          <lightning-button
+                            label="View Generated Spec"
+                            variant="neutral"
+                            size="small"
+                            onclick={handleViewSourceSpec}
+                            data-key={comp.methodName}
+                          ></lightning-button>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+
+                  <div
+                    class="slds-m-top_medium slds-p-top_small slds-border_top"
+                  >
+                    <lightning-input
+                      label="Version"
+                      value={comp.currentVersion}
+                      data-key={comp.methodName}
+                      data-field="currentVersion"
+                      onchange={handleInputChange}
+                      class="slds-size_1-of-4"
+                    ></lightning-input>
+                  </div>
                 </div>
+              </lightning-accordion-section>
             </template>
+          </lightning-accordion>
 
-            <!-- Empty State -->
-            <template if:false={comparisons}>
-                <div if:true={selectedClass} class="slds-p-around_xx-large slds-text-align_center">
-                    <lightning-spinner alternative-text="Loading..." size="large" variant="brand"></lightning-spinner>
-                    <p class="slds-m-top_large slds-text-heading_small">Fetching configurations for {selectedClass}...</p>
-                </div>
-                <div if:false={selectedClass} class="slds-p-around_xx-large slds-text-align_center">
-                    <lightning-icon icon-name="utility:info" size="large" variant="light"></lightning-icon>
-                    <p class="slds-m-top_medium">Select an API from the sidebar to manage its configuration.</p>
-                </div>
+          <div
+            class="slds-m-top_large slds-text-align_right sticky-footer slds-is-relative"
+          >
+            <lightning-button
+              label="Deploy All Metadata Updates"
+              variant="brand"
+              onclick={handleSave}
+              disabled={isSaving}
+            ></lightning-button>
+            <template if:true={isSaving}>
+              <lightning-spinner
+                alternative-text="Deploying..."
+                size="small"
+                variant="brand"
+              ></lightning-spinner>
             </template>
+          </div>
+        </div>
+      </template>
 
-        </lightning-card>
-    </div>
+      <!-- Empty State -->
+      <template if:false={comparisons}>
+        <div
+          if:true={selectedClass}
+          class="slds-p-around_xx-large slds-text-align_center"
+        >
+          <lightning-spinner
+            alternative-text="Loading..."
+            size="large"
+            variant="brand"
+          ></lightning-spinner>
+          <p class="slds-m-top_large slds-text-heading_small">
+            Fetching configurations for {selectedClass}...
+          </p>
+        </div>
+        <div
+          if:false={selectedClass}
+          class="slds-p-around_xx-large slds-text-align_center"
+        >
+          <lightning-icon
+            icon-name="utility:info"
+            size="large"
+            variant="light"
+          ></lightning-icon>
+          <p class="slds-m-top_medium">
+            Select an API from the sidebar to manage its configuration.
+          </p>
+        </div>
+      </template>
+    </lightning-card>
+  </div>
 
-    <!-- Modal for viewing generated spec -->
-    <template if:true={isSourceSpecModalOpen}>
-        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-modal_large slds-align_absolute-center">
-            <div class="slds-modal__container">
-                <header class="slds-modal__header">
-                    <button class="slds-button slds-button_icon slds-modal__close" title="Close" onclick={closeSourceSpecModal}>
-                        <lightning-icon icon-name="utility:close" alternative-text="Close" size="small"></lightning-icon>
-                        <span class="slds-assistive-text">Close</span>
-                    </button>
-                    <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Generated Spec for {modalMethodName}</h2>
-                </header>
-                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
-                    <div class="editor-container modal-source-editor" lwc:dom="manual"></div>
-                </div>
-                <footer class="slds-modal__footer">
-                    <lightning-button label="Close" onclick={closeSourceSpecModal}></lightning-button>
-                </footer>
-            </div>
-        </section>
-        <div class="slds-backdrop slds-backdrop_open"></div>
-    </template>
+  <!-- Modal for viewing generated spec -->
+  <template if:true={isSourceSpecModalOpen}>
+    <section
+      role="dialog"
+      tabindex="-1"
+      aria-labelledby="modal-heading-01"
+      aria-modal="true"
+      aria-describedby="modal-content-id-1"
+      class="slds-modal slds-fade-in-open slds-modal_large slds-align_absolute-center"
+    >
+      <div class="slds-modal__container">
+        <header class="slds-modal__header">
+          <button
+            class="slds-button slds-button_icon slds-modal__close"
+            title="Close"
+            onclick={closeSourceSpecModal}
+          >
+            <lightning-icon
+              icon-name="utility:close"
+              alternative-text="Close"
+              size="small"
+            ></lightning-icon>
+            <span class="slds-assistive-text">Close</span>
+          </button>
+          <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">
+            Generated Spec for {modalMethodName}
+          </h2>
+        </header>
+        <div
+          class="slds-modal__content slds-p-around_medium"
+          id="modal-content-id-1"
+        >
+          <div
+            class="editor-container modal-source-editor"
+            lwc:dom="manual"
+          ></div>
+        </div>
+        <footer class="slds-modal__footer">
+          <lightning-button
+            label="Close"
+            onclick={closeSourceSpecModal}
+          ></lightning-button>
+        </footer>
+      </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open"></div>
+  </template>
 </template>

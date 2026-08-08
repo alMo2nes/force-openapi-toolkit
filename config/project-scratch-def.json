@@ -1,11 +1,7 @@
 {
   "orgName": "minas company",
   "edition": "Developer",
-  "features": [
-    "API",
-    "Sites",
-    "AuthorApex"
-  ],
+  "features": ["API", "Sites", "AuthorApex"],
   "settings": {
     "lightningExperienceSettings": {
       "enableS1DesktopEnabled": true

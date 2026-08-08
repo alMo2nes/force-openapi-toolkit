@@ -1,1 +1,3 @@
-<apex:page contentType="text/plain" label="Session Bridge">{!$Api.Session_ID}</apex:page>
+<apex:page contentType="text/plain" label="Session Bridge"
+  >{!$Api.Session_ID}</apex:page
+>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <classAccesses>
+        <apexClass>RestEndpointInspector</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>SessionService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>SwaggerUIController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <customMetadataTypeAccesses>
+        <enabled>true</enabled>
+        <name>OpenApi_Endpoint__mdt</name>
+    </customMetadataTypeAccesses>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Force OpenApi Toolkit Guest</label>
+    <pageAccesses>
+        <apexPage>OAuthRedirect</apexPage>
+        <enabled>true</enabled>
+    </pageAccesses>
+    <pageAccesses>
+        <apexPage>SessionBridge</apexPage>
+        <enabled>true</enabled>
+    </pageAccesses>
+    <pageAccesses>
+        <apexPage>swagger_ui</apexPage>
+        <enabled>true</enabled>
+    </pageAccesses>
+</PermissionSet>

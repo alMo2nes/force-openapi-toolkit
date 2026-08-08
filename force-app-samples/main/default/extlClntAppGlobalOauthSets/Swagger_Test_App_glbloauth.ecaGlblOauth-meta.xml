@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ExtlClntAppGlobalOauthSettings xmlns="http://soap.sforce.com/2006/04/metadata">
     <callbackUrl>https://inifiteforce2-dev-ed.develop.my.salesforce-sites.com/swagger/apex/OAuthRedirect</callbackUrl>
     <externalClientApplication>Swagger_Test_App</externalClientApplication>

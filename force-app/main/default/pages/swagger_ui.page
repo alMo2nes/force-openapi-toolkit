@@ -1,69 +1,72 @@
 <apex:page
-        controller="SwaggerUIController"
-        showHeader="false"
-        sidebar="false"
-        docType="html-5.0">
-
-    <html>
-
+  controller="SwaggerUIController"
+  showHeader="false"
+  sidebar="false"
+  docType="html-5.0"
+>
+  <html>
     <head>
+      <apex:stylesheet
+        value="{!URLFOR($Resource.swagger_ui,'swagger-ui.css')}"
+      />
 
-        <apex:stylesheet
-                value="{!URLFOR($Resource.swagger_ui,'swagger-ui.css')}" />
+      <script
+        src="{!URLFOR($Resource.swagger_ui,'swagger-ui-bundle.js')}"
+      ></script>
 
-        <script
-                src="{!URLFOR($Resource.swagger_ui,'swagger-ui-bundle.js')}">
-        </script>
+      <script
+        src="{!URLFOR($Resource.swagger_ui,'swagger-ui-standalone-preset.js')}"
+      ></script>
 
-        <script
-                src="{!URLFOR($Resource.swagger_ui,'swagger-ui-standalone-preset.js')}">
-        </script>
+      <style>
+        /* Hide client secret field for PKCE */
 
-        <style>
-
-            /* Hide client secret field for PKCE */
-
-            input[type=password] {
-                display:none !important;
-            }
-
-        </style>
-
+        input[type="password"] {
+          display: none !important;
+        }
+      </style>
     </head>
 
     <body>
-
-    <apex:outputPanel layout="block">
+      <apex:outputPanel layout="block">
         <apex:outputPanel layout="block" rendered="{!isGuest}">
-            <div style="padding:10px;background:#f4f6f9;">
-                <label>OAuth Domain:</label>
+          <div style="padding: 10px; background: #f4f6f9">
+            <label>OAuth Domain:</label>
 
-                <input
-                        id="domain"
-                        size="50"
-                        placeholder="https://login.salesforce.com"
-                        value="{!orgDomain}"/>
+            <input
+              id="domain"
+              size="50"
+              placeholder="https://login.salesforce.com"
+              value="{!orgDomain}"
+            />
 
-                <!-- Client ID removed: user may provide their own token in the Authorize dialog -->
+            <!-- Client ID removed: user may provide their own token in the Authorize dialog -->
 
-                <button onclick="initializeSwagger()">
-                    Initialize
-                </button>
-            </div>
+            <button onclick="initializeSwagger()">Initialize</button>
+          </div>
         </apex:outputPanel>
 
         <apex:outputPanel layout="block" rendered="{!!isGuest}">
-            <div style="padding:10px;background:#eef6ff;border:1px solid #d0e4ff;">
-                <strong>Note:</strong>
-                The current Salesforce user session will be used as the API Bearer token for calls from this page.
-                <div style="margin-top:6px;color:#333;font-size:0.9em;">Using domain: {!orgDomain}</div>
+          <div
+            style="
+              padding: 10px;
+              background: #eef6ff;
+              border: 1px solid #d0e4ff;
+            "
+          >
+            <strong>Note:</strong>
+            The current Salesforce user session will be used as the API Bearer
+            token for calls from this page.
+            <div style="margin-top: 6px; color: #333; font-size: 0.9em">
+              Using domain: {!orgDomain}
             </div>
+          </div>
         </apex:outputPanel>
-    </apex:outputPanel>
+      </apex:outputPanel>
 
-    <div id="swagger-ui"></div>
+      <div id="swagger-ui"></div>
 
-    <script>
+      <script>
 
         // Inject server-side session token (empty for guest users)
         window.sessionToken = '{!JSENCODE(sessionToken)}';
@@ -78,6 +81,10 @@
             // If a domain input exists (guest users), use it; otherwise fallback to server orgDomain
             var domainEl = document.getElementById('domain');
             const domain = domainEl ? domainEl.value : window.orgDomain;
+
+            spec.servers=[
+              {"url" : domain}
+            ]
 
             if (spec && spec.components && spec.components.securitySchemes && spec.components.securitySchemes.salesforce_oauth) {
                 spec.components.securitySchemes
@@ -122,6 +129,7 @@
                 spec: specObj,
 
                 dom_id: '#swagger-ui',
+                oauth2RedirectUrl: window.location.origin + '/swagger/apex/OAuthRedirect',
 
                 presets: [
                     SwaggerUIBundle.presets.apis,
@@ -154,7 +162,9 @@
                 }
             });
 
-            // Do not initialize OAuth clientId here; allow users to paste/enter their own token.
+            ui.initOAuth({
+              usePkceWithAuthorizationCodeGrant: true
+            });
 
             window.ui = ui;
         }
@@ -164,10 +174,7 @@
         window.addEventListener('load', function() {
             try { initializeSwagger(); } catch (e) { console.error(e); }
         });
-
-    </script>
-
+      </script>
     </body>
-    </html>
-
+  </html>
 </apex:page>
